@@ -16,7 +16,7 @@ vet:
 	go vet ./...
 
 test:
-	go test ./...
+	go run github.com/onsi/ginkgo/v2/ginkgo -r --randomize-all --fail-on-pending
 
 tidy:
 	go mod tidy
@@ -55,4 +55,11 @@ check-generate-api: generate-api
 check-aep:
 	spectral lint --fail-severity=warn ./api/v1alpha1/openapi.yaml
 
-.PHONY: build run clean fmt vet test tidy generate-types generate-spec generate-server generate-client generate-api check-generate-api check-aep
+COVER_PKGS := ./internal/store/...,./internal/config/...,./internal/api_server/...
+
+test-coverage:
+	go run github.com/onsi/ginkgo/v2/ginkgo -r --randomize-all --cover --coverpkg=$(COVER_PKGS) --coverprofile=coverage.out
+	go tool cover -func=coverage.out
+
+.PHONY: build run clean fmt vet test test-coverage tidy generate-types generate-spec generate-server generate-client generate-api check-aep check-generate-api
+

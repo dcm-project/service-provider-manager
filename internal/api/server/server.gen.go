@@ -58,6 +58,15 @@ type Error struct {
 	Type string `json:"type"`
 }
 
+// Health Health status singleton resource
+type Health struct {
+	// Path Canonical path of the resource
+	Path *string `json:"path,omitempty"`
+
+	// Status Health status
+	Status *string `json:"status,omitempty"`
+}
+
 // Provider Full provider resource representation
 type Provider struct {
 	// CreateTime Timestamp when the provider was first registered
@@ -211,7 +220,7 @@ type ApplyProviderJSONRequestBody = Provider
 type ServerInterface interface {
 	// Health check
 	// (GET /health)
-	Health(w http.ResponseWriter, r *http.Request)
+	GetHealth(w http.ResponseWriter, r *http.Request)
 	// List all providers
 	// (GET /providers)
 	ListProviders(w http.ResponseWriter, r *http.Request, params ListProvidersParams)
@@ -235,7 +244,7 @@ type Unimplemented struct{}
 
 // Health check
 // (GET /health)
-func (_ Unimplemented) Health(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) GetHealth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -278,11 +287,11 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// Health operation middleware
-func (siw *ServerInterfaceWrapper) Health(w http.ResponseWriter, r *http.Request) {
+// GetHealth operation middleware
+func (siw *ServerInterfaceWrapper) GetHealth(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Health(w, r)
+		siw.Handler.GetHealth(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -551,7 +560,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/health", wrapper.Health)
+		r.Get(options.BaseURL+"/health", wrapper.GetHealth)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/providers", wrapper.ListProviders)
@@ -572,18 +581,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	return r
 }
 
-type HealthRequestObject struct {
+type GetHealthRequestObject struct {
 }
 
-type HealthResponseObject interface {
-	VisitHealthResponse(w http.ResponseWriter) error
+type GetHealthResponseObject interface {
+	VisitGetHealthResponse(w http.ResponseWriter) error
 }
 
-type Health200JSONResponse struct {
-	Status *string `json:"status,omitempty"`
-}
+type GetHealth200JSONResponse Health
 
-func (response Health200JSONResponse) VisitHealthResponse(w http.ResponseWriter) error {
+func (response GetHealth200JSONResponse) VisitGetHealthResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
@@ -848,7 +855,7 @@ func (response ApplyProviderdefaultApplicationProblemPlusJSONResponse) VisitAppl
 type StrictServerInterface interface {
 	// Health check
 	// (GET /health)
-	Health(ctx context.Context, request HealthRequestObject) (HealthResponseObject, error)
+	GetHealth(ctx context.Context, request GetHealthRequestObject) (GetHealthResponseObject, error)
 	// List all providers
 	// (GET /providers)
 	ListProviders(ctx context.Context, request ListProvidersRequestObject) (ListProvidersResponseObject, error)
@@ -895,23 +902,23 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
-// Health operation middleware
-func (sh *strictHandler) Health(w http.ResponseWriter, r *http.Request) {
-	var request HealthRequestObject
+// GetHealth operation middleware
+func (sh *strictHandler) GetHealth(w http.ResponseWriter, r *http.Request) {
+	var request GetHealthRequestObject
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.Health(ctx, request.(HealthRequestObject))
+		return sh.ssi.GetHealth(ctx, request.(GetHealthRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "Health")
+		handler = middleware(handler, "GetHealth")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(HealthResponseObject); ok {
-		if err := validResponse.VisitHealthResponse(w); err != nil {
+	} else if validResponse, ok := response.(GetHealthResponseObject); ok {
+		if err := validResponse.VisitGetHealthResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

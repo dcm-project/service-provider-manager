@@ -51,6 +51,15 @@ type Error struct {
 	Type string `json:"type"`
 }
 
+// Health Health status singleton resource
+type Health struct {
+	// Path Canonical path of the resource
+	Path *string `json:"path,omitempty"`
+
+	// Status Health status
+	Status *string `json:"status,omitempty"`
+}
+
 // Provider Full provider resource representation
 type Provider struct {
 	// CreateTime Timestamp when the provider was first registered

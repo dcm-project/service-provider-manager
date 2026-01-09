@@ -51,4 +51,8 @@ check-generate-api: generate-api
 	git diff --exit-code api/ internal/api/server/ pkg/client/ || \
 		(echo "Generated files out of sync. Run 'make generate-api'." && exit 1)
 
-.PHONY: build run clean fmt vet test tidy generate-types generate-spec generate-server generate-client generate-api check-generate-api
+# Check AEP compliance
+check-aep:
+	spectral lint ./api/v1alpha1/openapi.yaml
+
+.PHONY: build run clean fmt vet test tidy generate-types generate-spec generate-server generate-client generate-api check-generate-api check-aep

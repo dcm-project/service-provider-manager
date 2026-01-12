@@ -610,8 +610,8 @@ func (r ListProvidersResponse) StatusCode() int {
 type CreateProviderResponse struct {
 	Body                          []byte
 	HTTPResponse                  *http.Response
-	JSON200                       *ProviderResponse
-	JSON201                       *ProviderResponse
+	JSON200                       *Provider
+	JSON201                       *Provider
 	ApplicationproblemJSON400     *Error
 	ApplicationproblemJSON409     *Error
 	ApplicationproblemJSON422     *Error
@@ -860,14 +860,14 @@ func ParseCreateProviderResponse(rsp *http.Response) (*CreateProviderResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ProviderResponse
+		var dest Provider
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest ProviderResponse
+		var dest Provider
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

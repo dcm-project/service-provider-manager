@@ -9,28 +9,10 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// Defines values for ProviderServiceType.
+// Defines values for ProviderStatus.
 const (
-	ProviderServiceTypeContainer ProviderServiceType = "container"
-	ProviderServiceTypeDatabase  ProviderServiceType = "database"
-	ProviderServiceTypePod       ProviderServiceType = "pod"
-	ProviderServiceTypeStorage   ProviderServiceType = "storage"
-	ProviderServiceTypeVm        ProviderServiceType = "vm"
-)
-
-// Defines values for ProviderRegistrationServiceType.
-const (
-	ProviderRegistrationServiceTypeContainer ProviderRegistrationServiceType = "container"
-	ProviderRegistrationServiceTypeDatabase  ProviderRegistrationServiceType = "database"
-	ProviderRegistrationServiceTypePod       ProviderRegistrationServiceType = "pod"
-	ProviderRegistrationServiceTypeStorage   ProviderRegistrationServiceType = "storage"
-	ProviderRegistrationServiceTypeVm        ProviderRegistrationServiceType = "vm"
-)
-
-// Defines values for ProviderResponseStatus.
-const (
-	Registered ProviderResponseStatus = "registered"
-	Updated    ProviderResponseStatus = "updated"
+	Registered ProviderStatus = "registered"
+	Updated    ProviderStatus = "updated"
 )
 
 // Error RFC 7807 compliant error response
@@ -72,7 +54,7 @@ type Provider struct {
 	Endpoint string `json:"endpoint"`
 
 	// Id Unique identifier for the Service Provider
-	Id openapi_types.UUID `json:"id"`
+	Id *openapi_types.UUID `json:"id,omitempty"`
 
 	// Metadata Additional metadata about the provider
 	Metadata *ProviderMetadata `json:"metadata,omitempty"`
@@ -87,14 +69,17 @@ type Provider struct {
 	Path *string `json:"path,omitempty"`
 
 	// ServiceType Type of service this provider offers
-	ServiceType ProviderServiceType `json:"service_type"`
+	ServiceType string `json:"service_type"`
+
+	// Status Registration status
+	Status *ProviderStatus `json:"status,omitempty"`
 
 	// UpdateTime Timestamp when the provider was last updated
 	UpdateTime *time.Time `json:"update_time,omitempty"`
 }
 
-// ProviderServiceType Type of service this provider offers
-type ProviderServiceType string
+// ProviderStatus Registration status
+type ProviderStatus string
 
 // ProviderList Paginated list of providers
 type ProviderList struct {
@@ -117,58 +102,6 @@ type ProviderMetadata struct {
 	// Zone Availability zone or datacenter identifier
 	Zone *string `json:"zone,omitempty"`
 }
-
-// ProviderRegistration Registration payload for a service provider
-type ProviderRegistration struct {
-	// DisplayName Human-readable display name for the provider
-	DisplayName *string `json:"display_name,omitempty"`
-
-	// Endpoint Full endpoint URL where the provider API is accessible
-	Endpoint string `json:"endpoint"`
-
-	// Id Optional unique identifier for the Service Provider.
-	// If not provided, DCM will generate one automatically.
-	Id *openapi_types.UUID `json:"id,omitempty"`
-
-	// Metadata Additional metadata about the provider
-	Metadata *ProviderMetadata `json:"metadata,omitempty"`
-
-	// Name Unique name of the Service Provider.
-	// Used as the natural key for matching existing registrations.
-	Name string `json:"name"`
-
-	// Operations List of operations supported for this service type
-	Operations *[]string `json:"operations,omitempty"`
-
-	// Path Resource path identifier
-	Path *string `json:"path,omitempty"`
-
-	// ServiceType Type of service this provider offers.
-	// Each provider registration is per service type.
-	ServiceType ProviderRegistrationServiceType `json:"service_type"`
-}
-
-// ProviderRegistrationServiceType Type of service this provider offers.
-// Each provider registration is per service type.
-type ProviderRegistrationServiceType string
-
-// ProviderResponse Response payload after provider registration
-type ProviderResponse struct {
-	// Id Unique identifier for the Service Provider
-	Id openapi_types.UUID `json:"id"`
-
-	// Path Resource path identifier
-	Path *string `json:"path,omitempty"`
-
-	// Provider Full provider resource representation
-	Provider *Provider `json:"provider,omitempty"`
-
-	// Status Registration status
-	Status ProviderResponseStatus `json:"status"`
-}
-
-// ProviderResponseStatus Registration status
-type ProviderResponseStatus string
 
 // ResourceCapacity Resource capacity information
 type ResourceCapacity struct {
@@ -204,7 +137,7 @@ type CreateProviderParams struct {
 }
 
 // CreateProviderJSONRequestBody defines body for CreateProvider for application/json ContentType.
-type CreateProviderJSONRequestBody = ProviderRegistration
+type CreateProviderJSONRequestBody = Provider
 
 // ApplyProviderJSONRequestBody defines body for ApplyProvider for application/json ContentType.
 type ApplyProviderJSONRequestBody = Provider

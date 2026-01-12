@@ -353,12 +353,6 @@ components:
           type: string
           description: Type of service this provider offers
           example: "vm"
-          enum:
-            - vm
-            - database
-            - container
-            - storage
-            - pod
         operations:
           type: array
           items:

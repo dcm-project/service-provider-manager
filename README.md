@@ -1,6 +1,6 @@
-# Service Provider API
+# Service Provider Manager
 
-DCM Service Provider API - Registration and management of Service Providers.
+DCM Service Provider Manager - Registration and management of Service Providers.
 
 ## License
 

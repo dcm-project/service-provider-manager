@@ -322,7 +322,12 @@ components:
     Provider:
       type: object
       description: Full provider resource representation
-      x-aep-resource: true
+      x-aep-resource:
+        type: serviceprovider.dcm.io/provider
+        singular: provider
+        plural: providers
+        patterns:
+          - providers/{provider_id}
       required:
         - name
         - endpoint

@@ -26,7 +26,7 @@ paths:
       tags:
         - health
       summary: Health check
-      operationId: GetHealth
+      operationId: getHealth
       description: Health check for DCM Service Provider API
       responses:
         '200':
@@ -41,7 +41,7 @@ paths:
       tags:
         - provider
       summary: List all providers
-      operationId: ListProviders
+      operationId: listProviders
       description: Returns a list of registered service providers with optional filtering
       parameters:
         - name: type
@@ -86,7 +86,7 @@ paths:
       tags:
         - provider
       summary: Register a Service Provider
-      operationId: CreateProvider
+      operationId: createProvider
       description: |
         Register a new service provider or update an existing one.
         Registration is idempotent:
@@ -150,7 +150,7 @@ paths:
       tags:
         - provider
       summary: Get a provider
-      operationId: GetProvider
+      operationId: getProvider
       description: Get a service provider by its unique ID
       parameters:
         - name: providerId
@@ -190,7 +190,7 @@ paths:
       tags:
         - provider
       summary: Update a Service Provider
-      operationId: ApplyProvider
+      operationId: applyProvider
       description: |
         Update an existing service provider.
         The providerID in the path must match an existing provider.
@@ -244,7 +244,7 @@ paths:
       tags:
         - provider
       summary: Delete a service Provider
-      operationId: DeleteProvider
+      operationId: deleteProvider
       description: Remove a service provider from the registry
       parameters:
         - name: providerId

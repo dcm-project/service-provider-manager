@@ -281,6 +281,7 @@ components:
     ProviderMetadata:
       type: object
       description: Additional metadata about the provider
+      additionalProperties: true
       properties:
         region_code:
           type: string

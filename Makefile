@@ -1,3 +1,5 @@
+.PHONY: build run clean fmt vet test test-coverage tidy generate-types generate-spec generate-server generate-client generate-api check-aep check-generate-api
+
 BINARY_NAME := service-provider-manager
 
 build:
@@ -60,6 +62,4 @@ COVER_PKGS := ./internal/store/...,./internal/config/...,./internal/api_server/.
 test-coverage:
 	go run github.com/onsi/ginkgo/v2/ginkgo -r --randomize-all --cover --coverpkg=$(COVER_PKGS) --coverprofile=coverage.out
 	go tool cover -func=coverage.out
-
-.PHONY: build run clean fmt vet test test-coverage tidy generate-types generate-spec generate-server generate-client generate-api check-aep check-generate-api
 

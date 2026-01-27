@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/dcm-project/service-provider-manager/internal/api/server"
@@ -13,6 +15,17 @@ import (
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+const (
+	defaultPageSize = 100
+	maxPageSize     = 100
+)
+
+// ListResult contains the result of listing providers with pagination info.
+type ListResult struct {
+	Providers     []server.Provider
+	NextPageToken string
+}
 
 // ProviderService handles business logic for provider management.
 type ProviderService struct {
@@ -146,24 +159,78 @@ func (s *ProviderService) GetProvider(ctx context.Context, providerID string) (*
 	return ModelToProvider(provider), nil
 }
 
-// ListProviders returns all providers, optionally filtered by service type.
-func (s *ProviderService) ListProviders(ctx context.Context, serviceType string) ([]server.Provider, error) {
+// ListProviders returns providers with pagination support per AEP-158.
+func (s *ProviderService) ListProviders(ctx context.Context, serviceType string, requestedPageSize int, pageToken string) (*ListResult, error) {
+	// Validate and normalize page size per AEP-158
+	pageSize := requestedPageSize
+	if pageSize < 0 {
+		return nil, &ServiceError{Code: ErrCodeValidation, Message: "max_page_size must not be negative"}
+	}
+	if pageSize == 0 {
+		pageSize = defaultPageSize
+	}
+	if pageSize > maxPageSize {
+		pageSize = maxPageSize
+	}
+
+	// Decode page token to get offset
+	offset := 0
+	if pageToken != "" {
+		decoded, err := decodePageToken(pageToken)
+		if err != nil {
+			return nil, &ServiceError{Code: ErrCodeValidation, Message: "invalid page_token"}
+		}
+		offset = decoded
+	}
+
+	// Build filter
 	var filter *store.ProviderFilter
 	if serviceType != "" {
 		filter = &store.ProviderFilter{ServiceType: &serviceType}
 	}
 
-	providers, err := s.store.Provider().List(ctx, filter)
+	// Get total count for next page calculation
+	total, err := s.store.Provider().Count(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
 
+	// Fetch providers with pagination
+	pagination := &store.Pagination{Limit: pageSize, Offset: offset}
+	providers, err := s.store.Provider().List(ctx, filter, pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to API types
 	result := make([]server.Provider, len(providers))
 	for i, p := range providers {
 		result[i] = *ModelToProvider(&p)
 	}
 
-	return result, nil
+	// Calculate next page token
+	var nextPageToken string
+	nextOffset := offset + len(providers)
+	if int64(nextOffset) < total {
+		nextPageToken = encodePageToken(nextOffset)
+	}
+
+	return &ListResult{
+		Providers:     result,
+		NextPageToken: nextPageToken,
+	}, nil
+}
+
+func encodePageToken(offset int) string {
+	return base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(offset)))
+}
+
+func decodePageToken(token string) (int, error) {
+	decoded, err := base64.StdEncoding.DecodeString(token)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(string(decoded))
 }
 
 // UpdateProvider updates an existing provider. Returns ErrCodeNotFound if provider

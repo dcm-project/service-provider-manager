@@ -28,20 +28,37 @@ func (h *Handler) GetHealth(ctx context.Context, request server.GetHealthRequest
 
 func (h *Handler) ListProviders(ctx context.Context, request server.ListProvidersRequestObject) (server.ListProvidersResponseObject, error) {
 	var serviceType string
+	var maxPageSize int
+	var pageToken string
+
 	if request.Params.Type != nil {
 		serviceType = *request.Params.Type
 	}
+	if request.Params.MaxPageSize != nil {
+		maxPageSize = *request.Params.MaxPageSize
+	}
+	if request.Params.PageToken != nil {
+		pageToken = *request.Params.PageToken
+	}
 
-	providers, err := h.providerService.ListProviders(ctx, serviceType)
+	result, err := h.providerService.ListProviders(ctx, serviceType, maxPageSize, pageToken)
 	if err != nil {
+		if svcErr, ok := err.(*service.ServiceError); ok && svcErr.Code == service.ErrCodeValidation {
+			return server.ListProviders400ApplicationProblemPlusJSONResponse(newError("validation-error", "Invalid request", svcErr.Message, 400)), nil
+		}
 		return server.ListProviders400ApplicationProblemPlusJSONResponse(newError("list-error", "Failed to list providers", err.Error(), 400)), nil
 	}
 
-	return server.ListProviders200JSONResponse{Providers: &providers}, nil
+	response := server.ListProviders200JSONResponse{Providers: &result.Providers}
+	if result.NextPageToken != "" {
+		response.NextPageToken = &result.NextPageToken
+	}
+
+	return response, nil
 }
 
 func (h *Handler) CreateProvider(ctx context.Context, request server.CreateProviderRequestObject) (server.CreateProviderResponseObject, error) {
-	response, err := h.providerService.RegisterProvider(ctx, request.Body, request.Params.Id)
+	response, err := h.providerService.RegisterOrUpdateProvider(ctx, request.Body, request.Params.Id)
 	if err != nil {
 		if svcErr, ok := err.(*service.ServiceError); ok {
 			switch svcErr.Code {

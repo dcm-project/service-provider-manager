@@ -28,24 +28,38 @@ generate-types:
 		--config=api/v1alpha1/types.gen.cfg \
 		-o api/v1alpha1/types.gen.go \
 		api/v1alpha1/openapi.yaml
+	go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen \
+		--config=api/v1alpha1/resource_manager/types.gen.cfg \
+		-o api/v1alpha1/resource_manager/types.gen.go \
+		api/v1alpha1/resource_manager/openapi.yaml
 
 generate-spec:
 	go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen \
 		--config=api/v1alpha1/spec.gen.cfg \
 		-o api/v1alpha1/spec.gen.go \
 		api/v1alpha1/openapi.yaml
-
+	go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen \
+		--config=api/v1alpha1/resource_manager/spec.gen.cfg \
+		-o api/v1alpha1/resource_manager/spec.gen.go \
+		api/v1alpha1/resource_manager/openapi.yaml
 generate-server:
 	go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen \
 		--config=internal/api/server/server.gen.cfg \
 		-o internal/api/server/server.gen.go \
 		api/v1alpha1/openapi.yaml
-
+	go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen \
+		--config=internal/api/server/resource_manager/server.gen.cfg \
+		-o internal/api/server/resource_manager/server.gen.go \
+		api/v1alpha1/resource_manager/openapi.yaml
 generate-client:
 	go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen \
 		--config=pkg/client/client.gen.cfg \
 		-o pkg/client/client.gen.go \
 		api/v1alpha1/openapi.yaml
+	go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen \
+		--config=pkg/client/resource_manager/client.gen.cfg \
+		-o pkg/client/resource_manager/client.gen.go \
+		api/v1alpha1/resource_manager/openapi.yaml
 
 generate-api: generate-types generate-spec generate-server generate-client
 
@@ -56,6 +70,7 @@ check-generate-api: generate-api
 # Check AEP compliance
 check-aep:
 	spectral lint --fail-severity=warn ./api/v1alpha1/openapi.yaml
+	spectral lint --fail-severity=warn ./api/v1alpha1/resource_manager/openapi.yaml
 
 COVER_PKGS := ./internal/store/...,./internal/config/...,./internal/api_server/...
 

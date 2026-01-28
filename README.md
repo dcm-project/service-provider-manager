@@ -54,8 +54,8 @@ Environment variables:
 | `DB_HOST` | `localhost` | PostgreSQL host |
 | `DB_PORT` | `5432` | PostgreSQL port |
 | `DB_NAME` | `service-provider` | Database name |
-| `DB_USER` | `admin` | Database user |
-| `DB_PASS` | `adminpass` | Database password |
+| `DB_USER` | *(none)* | Database user (required for pgsql) |
+| `DB_PASS` | *(none)* | Database password (required for pgsql) |
 
 ## License
 

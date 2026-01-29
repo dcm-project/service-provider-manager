@@ -3,10 +3,6 @@ name: E2E
 on:
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - ".github/workflows/check-*.yaml"
   workflow_dispatch:
 
 concurrency:
@@ -19,21 +15,37 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Check for relevant changes
+        uses: tj-actions/changed-files@v47
+        id: filter
+        with:
+          files_ignore: |
+            **.md
+            docs/**
+            .github/workflows/check-*.yaml
+
       - name: Set up Go
+        if: steps.filter.outputs.any_changed == 'true'
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
 
       - name: Start services
+        if: steps.filter.outputs.any_changed == 'true'
         run: docker compose up -d --build --wait
 
       - name: Run E2E tests
+        if: steps.filter.outputs.any_changed == 'true'
         run: make test-e2e
 
       - name: Show logs on failure
-        if: failure()
+        if: failure() && steps.filter.outputs.any_changed == 'true'
         run: docker compose logs
 
       - name: Stop services
-        if: always()
+        if: always() && steps.filter.outputs.any_changed == 'true'
         run: docker compose down -v
+
+      - name: Skip
+        if: steps.filter.outputs.any_changed == 'false'
+        run: echo "No relevant changes, skipping E2E tests"
